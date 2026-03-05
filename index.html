@@ -51,11 +51,19 @@
         }
 
         .profile-pic {
-            width: 45px; height: 45px;
+            width: 45px; 
+            height: 45px;
             border-radius: 15px;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            background-color: var(--accent);
+            /* --- LOGO FILE PATH CONFIG --- */
+            background-image: url('logo.jpg'); 
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            /* ----------------------------- */
             box-shadow: var(--shadow);
             cursor: pointer;
+            border: 2px solid white;
         }
 
         /* --- Main Scrollable Content --- */
@@ -89,7 +97,6 @@
             display: block;
         }
 
-        /* Responsive Grid for Tracks */
         .track-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -140,6 +147,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            cursor: pointer;
         }
 
         .player-top {
@@ -186,6 +194,19 @@
             transition: width 0.1s linear;
         }
 
+        /* --- Drawer Player --- */
+        #player-drawer {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: white; z-index: 2000; transform: translateY(100%);
+            transition: transform 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+            display: flex; flex-direction: column; align-items: center; padding: 60px 30px;
+        }
+        #player-drawer.open { transform: translateY(0); }
+        .drawer-handle { width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; position: absolute; top: 15px; }
+        .big-art { width: 80vw; max-width: 350px; aspect-ratio: 1; border-radius: 30px; background-size: cover; background-position: center; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .drawer-info { text-align: center; margin-bottom: 40px; }
+        .drawer-controls { display: flex; align-items: center; gap: 40px; }
+
         /* --- Bottom Navigation --- */
         nav.main-nav {
             position: fixed;
@@ -214,7 +235,6 @@
 
         .nav-item.active { color: var(--accent); }
 
-        /* Mobile Adjustments */
         @media (max-width: 600px) {
             .current-track-info { width: 60%; }
             .player-bar { bottom: 90px; padding: 12px 15px; }
@@ -225,6 +245,8 @@
 <body>
 
 <div id="app">
+    <audio id="audio-engine"></audio>
+
     <header>
         <div>
             <h2 id="page-title">Home</h2>
@@ -261,7 +283,7 @@
         </section>
     </main>
 
-    <div class="player-bar">
+    <div class="player-bar" onclick="toggleDrawer(true)">
         <div class="player-top">
             <div class="current-track-info">
                 <div id="p-thumb" class="track-thumb" style="background: #cbd5e1; width: 40px; height: 40px;">
@@ -274,13 +296,27 @@
             </div>
             
             <div class="player-controls">
-                <button onclick="player.prev()" style="background:none; border:none; color:var(--text-main); cursor:pointer"><i data-lucide="skip-back"></i></button>
-                <button class="play-btn" onclick="player.toggle()"><i data-lucide="play" id="play-icon"></i></button>
-                <button onclick="player.next()" style="background:none; border:none; color:var(--text-main); cursor:pointer"><i data-lucide="skip-forward"></i></button>
+                <button onclick="event.stopPropagation(); player.prev()" style="background:none; border:none; color:var(--text-main); cursor:pointer"><i data-lucide="skip-back"></i></button>
+                <button class="play-btn" onclick="event.stopPropagation(); player.toggle()"><i data-lucide="play" id="play-icon"></i></button>
+                <button onclick="event.stopPropagation(); player.next()" style="background:none; border:none; color:var(--text-main); cursor:pointer"><i data-lucide="skip-forward"></i></button>
             </div>
         </div>
         <div class="progress-wrapper">
             <div id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="player-drawer">
+        <div class="drawer-handle" onclick="toggleDrawer(false)"></div>
+        <div id="d-art" class="big-art"></div>
+        <div class="drawer-info">
+            <h1 id="d-name">Song Name</h1>
+            <p id="d-artist">Artist Name</p>
+        </div>
+        <div class="drawer-controls">
+            <button onclick="player.prev()" style="background:none; border:none;"><i data-lucide="skip-back" size="32"></i></button>
+            <button class="play-btn" style="width:70px; height:70px;" onclick="player.toggle()"><i data-lucide="play" size="32" class="d-play-icon"></i></button>
+            <button onclick="player.next()" style="background:none; border:none;"><i data-lucide="skip-forward" size="32"></i></button>
         </div>
     </div>
 
@@ -294,13 +330,15 @@
 
 <script>
     const tracks = [
-        { name: "Solar Flare", artist: "Nu-Logic", color: "#6366f1" },
-        { name: "City Lights", artist: "Vibe Master", color: "#f43f5e" },
-        { name: "Midnight Walk", artist: "Echo Boy", color: "#10b981" },
-        { name: "Neon Dreams", artist: "Retro Future", color: "#8b5cf6" },
-        { name: "Mountain High", artist: "Acoustic soul", color: "#f59e0b" },
-        { name: "Deep Sea", artist: "Sub Zero", color: "#06b6d4" }
+        { name: "Solar Flare", artist: "Nu-Logic", color: "#6366f1", src: "" },
+        { name: "City Lights", artist: "Vibe Master", color: "#f43f5e", src: "" },
+        { name: "Midnight Walk", artist: "Echo Boy", color: "#10b981", src: "" },
+        { name: "Neon Dreams", artist: "Retro Future", color: "#8b5cf6", src: "" },
+        { name: "Mountain High", artist: "Acoustic soul", color: "#f59e0b", src: "" },
+        { name: "Deep Sea", artist: "Sub Zero", color: "#06b6d4", src: "" }
     ];
+
+    const audio = document.getElementById('audio-engine');
 
     const player = {
         currentIdx: -1,
@@ -311,9 +349,11 @@
         load(i) {
             this.currentIdx = i;
             const t = tracks[i];
-            document.getElementById('p-name').innerText = t.name;
-            document.getElementById('p-artist').innerText = t.artist;
-            document.getElementById('p-thumb').style.backgroundColor = t.color;
+            document.getElementById('p-name').innerText = document.getElementById('d-name').innerText = t.name;
+            document.getElementById('p-artist').innerText = document.getElementById('d-artist').innerText = t.artist;
+            document.getElementById('p-thumb').style.backgroundColor = document.getElementById('d-art').style.backgroundColor = t.color;
+            
+            if(t.src) { audio.src = t.src; audio.play(); }
             this.progress = 0;
             this.play();
         },
@@ -325,16 +365,21 @@
 
         play() {
             this.playing = true;
-            document.getElementById('play-icon').setAttribute('data-lucide', 'pause');
-            lucide.createIcons();
+            this.updateIcons('pause');
             this.startTicker();
         },
 
         pause() {
             this.playing = false;
-            document.getElementById('play-icon').setAttribute('data-lucide', 'play');
-            lucide.createIcons();
+            this.updateIcons('play');
             clearInterval(this.timer);
+        },
+
+        updateIcons(name) {
+            document.getElementById('play-icon').setAttribute('data-lucide', name);
+            const dIcon = document.querySelector('.d-play-icon');
+            if(dIcon) dIcon.setAttribute('data-lucide', name);
+            lucide.createIcons();
         },
 
         next() { this.load((this.currentIdx + 1) % tracks.length); },
@@ -349,6 +394,10 @@
             }, 100);
         }
     };
+
+    function toggleDrawer(open) {
+        document.getElementById('player-drawer').classList.toggle('open', open);
+    }
 
     function navigate(viewId, el, title) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
