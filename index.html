@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AS Music - Float</title>
+    <title>AS Music | Discover Your Vibe</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -271,10 +271,10 @@
         <section id="browse" class="view">
             <span class="section-label">Explore Genres</span>
             <div class="track-grid">
-                <div class="track-row" style="background: rgba(30, 58, 138, 0.3)">Pop Essentials</div>
-                <div class="track-row" style="background: rgba(127, 29, 29, 0.3)">Chill Lofi</div>
+                <div class="track-row" style="background: rgba(30, 58, 138, 0.3)">Hip Hop</div>
+                <div class="track-row" style="background: rgba(127, 29, 29, 0.3)">Amapiano</div>
                 <div class="track-row" style="background: rgba(6, 78, 59, 0.3)">Deep House</div>
-                <div class="track-row" style="background: rgba(76, 29, 149, 0.3)">Indie Folk</div>
+                <div class="track-row" style="background: rgba(76, 29, 149, 0.3)">Rap</div>
             </div>
         </section>
 
@@ -335,27 +335,82 @@
 
 <script>
     const tracks = [
-        { name: "Solar Flare", artist: "Nu-Logic", color: "#6366f1" },
-        { name: "City Lights", artist: "Vibe Master", color: "#f43f5e" },
-        { name: "Midnight Walk", artist: "Echo Boy", color: "#10b981" },
-        { name: "Neon Dreams", artist: "Retro Future", color: "#8b5cf6" },
-        { name: "Mountain High", artist: "Acoustic soul", color: "#f59e0b" },
-        { name: "Deep Sea", artist: "Sub Zero", color: "#06b6d4" }
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        },
+        { 
+            name: "AS Music Production", 
+            artist: "Produced by AS Music", 
+            color: "#6366f1", 
+            cover: "c1.jpg", 
+            src: "as_music_production.mp3" 
+        }
     ];
 
     const player = {
         currentIdx: -1,
         playing: false,
-        progress: 0,
-        timer: null,
+        audio: document.getElementById('audio-engine'),
 
         load(i) {
             this.currentIdx = i;
             const t = tracks[i];
+            
+            // Update UI
             document.getElementById('p-name').innerText = document.getElementById('d-name').innerText = t.name;
             document.getElementById('p-artist').innerText = document.getElementById('d-artist').innerText = t.artist;
-            document.getElementById('p-thumb').style.backgroundColor = document.getElementById('d-art').style.backgroundColor = t.color;
-            this.progress = 0;
+            
+            // Update Backgrounds/Covers
+            const pThumb = document.getElementById('p-thumb');
+            const dArt = document.getElementById('d-art');
+            
+            pThumb.style.backgroundImage = dArt.style.backgroundImage = `url(${t.cover})`;
+            pThumb.style.backgroundSize = "cover";
+            pThumb.style.backgroundColor = t.color; // Fallback
+            pThumb.innerHTML = ""; // Clears the placeholder music icon
+
+            // Load and Play Audio
+            this.audio.src = t.src;
+            this.audio.load();
             this.play();
         },
 
@@ -365,15 +420,15 @@
         },
 
         play() {
+            this.audio.play().catch(e => console.log("Interaction required"));
             this.playing = true;
             this.updateIcons('pause');
-            this.startTicker();
         },
 
         pause() {
+            this.audio.pause();
             this.playing = false;
             this.updateIcons('play');
-            clearInterval(this.timer);
         },
 
         updateIcons(name) {
@@ -384,17 +439,19 @@
         },
 
         next() { this.load((this.currentIdx + 1) % tracks.length); },
-        prev() { this.load((this.currentIdx - 1 + tracks.length) % tracks.length); },
+        prev() { this.load((this.currentIdx - 1 + tracks.length) % tracks.length); }
+    };
 
-        startTicker() {
-            clearInterval(this.timer);
-            this.timer = setInterval(() => {
-                this.progress += 0.5;
-                document.getElementById('progress-fill').style.width = this.progress + '%';
-                if(this.progress >= 100) this.next();
-            }, 100);
+    // Replace the timer with real audio time updates
+    player.audio.ontimeupdate = () => {
+        if (player.audio.duration) {
+            const progress = (player.audio.currentTime / player.audio.duration) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
         }
     };
+
+    // Auto-play next track
+    player.audio.onended = () => player.next();
 
     function toggleDrawer(open) {
         document.getElementById('player-drawer').classList.toggle('open', open);
@@ -415,7 +472,7 @@
             card.className = 'track-row';
             card.onclick = () => player.load(i);
             card.innerHTML = `
-                <div class="track-thumb" style="background:${t.color}"><i data-lucide="play" size="20"></i></div>
+                <div class="track-thumb" style="background-image:url(${t.cover}); background-size:cover; background-color:${t.color}"></div>
                 <div style="flex:1">
                     <div style="font-weight:700">${t.name}</div>
                     <div style="font-size:12px; color:var(--text-sub)">${t.artist}</div>
